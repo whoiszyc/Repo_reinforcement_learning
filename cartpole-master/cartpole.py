@@ -67,6 +67,7 @@ def cartpole():
     action_space = env.action_space.n
     dqn_solver = DQNSolver(observation_space, action_space)
     run = 0
+    TrainingDone = 0
     while True:
         run += 1
         state = env.reset()
@@ -82,11 +83,40 @@ def cartpole():
             dqn_solver.remember(state, action, reward, state_next, terminal)
             state = state_next
             if terminal:
-                print "Run: " + str(run) + ", exploration: " + str(dqn_solver.exploration_rate) + ", score: " + str(step)
-                score_logger.add_score(step, run)
+                print("Run: " + str(run) + ", exploration: " + str(dqn_solver.exploration_rate) + ", score: " + str(step))
+                TrainingDone = score_logger.add_score(step, run)
                 break
             dqn_solver.experience_replay()
 
+            if TrainingDone:
+                print('Training complete')
+                return env, dqn_solver
+
+
+def play(env, dqn, num_play=10):
+    run = 0
+    while run <= num_play:
+        obs, done = env.reset(), False
+        observation_space = env.observation_space.shape[0]
+        episode_rew = 0
+        while not done:
+            env.render()
+            obs = np.reshape(obs, [1, observation_space])
+            obs, rew, done, _ = env.step(dqn.act(obs))
+            episode_rew += rew
+
+            # if done, play for some extra time steps (100 here) to see the falling effect
+            if done:
+                extra_step = 0
+                while done and extra_step <= 100:
+                    env.render()
+                    obs = np.reshape(obs, [1, observation_space])
+                    obs, rew, done, _ = env.step(dqn.act(obs))
+                    extra_step = extra_step + 1
+
+        print("Episode reward", episode_rew)
+        run += 1
 
 if __name__ == "__main__":
-    cartpole()
+    env, dqn = cartpole()
+    play(env, dqn, 15)
