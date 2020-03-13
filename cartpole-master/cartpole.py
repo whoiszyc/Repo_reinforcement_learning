@@ -75,7 +75,7 @@ def cartpole():
         step = 0
         while True:
             step += 1
-            #env.render()
+            env.render()
             action = dqn_solver.act(state)
             state_next, reward, terminal, info = env.step(action)
             reward = reward if not terminal else -reward
